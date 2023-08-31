@@ -34,7 +34,15 @@ let e2 = Prim("+", CstI 3, Var "a");;
 
 let e3 = Prim("+", Prim("*", Var "b", CstI 9), Var "a")
 
-//Exercise 1.1 c)
+// Exercise 1.1 ii
+(*
+eval (Prim("==", CstI 7, CstI 12)) [] -> 0
+eval (Prim("==", CstI 7, CstI 7)) [] -> 1
+eval (Prim("min", CstI 7, CstI 12)) [] -> 7
+eval (Prim("max", CstI 7, CstI 12)) [] -> 12
+*)
+
+//Exercise 1.1 i & iii
 let rec eval e (env : (string * int) list) : int =
     match e with
     | CstI i              -> i
@@ -49,7 +57,7 @@ let rec eval e (env : (string * int) list) : int =
       | "max" -> if r1 > r2 then r1 else r2
       | "min" -> if r1 < r2 then r1 else r2
       | "==" -> if r1 = r2 then r1 else r2
-      | _ -> failwith "unkno[]wn primitive"
+      | _ -> failwith "unknown primitive"
     | If(e1, e2, e3) ->
       match eval e1 env with
       | 0 -> eval e3 env                //else
@@ -60,15 +68,6 @@ let e1v  = eval e1 env
 let e2v1 = eval e2 env
 let e2v2 = eval e2 [("a", 314)];;
 let e3v  = eval e3 env
-
-
-// Exercise 1.1 b)
-(*
-eval (Prim("==", CstI 7, CstI 12)) [] -> 0
-eval (Prim("==", CstI 7, CstI 7)) [] -> 1
-eval (Prim("min", CstI 7, CstI 12)) [] -> 7
-eval (Prim("max", CstI 7, CstI 12)) [] -> 12
-*)
 
 // Exercise 1.2 i
 
@@ -120,3 +119,15 @@ let rec simplify (a : aexp) =
     | (Var x, Var y) when x = y -> CstI 0 
     | _ -> Sub (x, y)
   | _ -> a
+
+//Exercise 1.2 v
+let rec differential (a: aexp) (v: string) =
+  match a with
+  | CstI _ -> CstI 0
+  | Var x ->
+    match x with
+    | v when v = x -> CstI 1
+    | _ -> CstI 0
+  | Add (x, y) -> Add((differential x v), (differential y v))
+  | Sub (x, y) -> Sub((differential x v), (differential y v))
+  | Mul (x, y) -> Add(Mul(differential x v, y), Mul(x, (differential y v)))
