@@ -7,7 +7,6 @@ abstract class Expr {
     public abstract int eval(ImmutableDictionary<string, int> env);
     public abstract Expr simplify();
     public abstract string toString();
-
 }
 
 class CstI : Expr {
@@ -28,6 +27,10 @@ class CstI : Expr {
     public override string toString() {
         return value.ToString();
     }
+
+    public int getValue() {
+        return value;
+    }
 }
 
 class Var : Expr {
@@ -46,6 +49,10 @@ class Var : Expr {
     }
 
     public override string toString() {
+        return name;
+    }
+
+    public string getName() {
         return name;
     }
 }
@@ -69,7 +76,29 @@ class Add : Binop {
 
     // INCOMPLETE
     public override Expr simplify() {
-        return new Add(exp1.simplify(), exp2.simplify());
+        var e1 = exp1.simplify();
+        var e2 = exp2.simplify();
+        switch ((e1, e2))
+        {
+            case (CstI, CstI): {
+                var v1 = ((CstI)e1).getValue();
+                var v2 = ((CstI)e2).getValue();
+                return new CstI(v1 + v2);
+                }
+            case (CstI, _): {
+                var v = ((CstI)e1).getValue();
+                if (v == 0) {
+                    return e2;
+                }
+                break; }
+            case (_, CstI): {
+                var v = ((CstI)e2).getValue();
+                if (v == 0) {
+                    return e1;
+                }
+                break; }
+        }
+        return new Add(e1, e2);
     }
 
     public override string toString() {
@@ -87,7 +116,33 @@ class Mul : Binop {
 
     // INCOMPLETE
     public override Expr simplify() {
-        return new Mul(exp1.simplify(), exp2.simplify());
+        var e1 = exp1.simplify();
+        var e2 = exp2.simplify();
+        switch ((e1, e2))
+        {
+            case (CstI, CstI): {
+                var v1 = ((CstI)e1).getValue();
+                var v2 = ((CstI)e2).getValue();
+                return new CstI(v1*v2);
+                }
+            case (CstI, _): {
+                var v = ((CstI)e1).getValue();
+                if (v == 1) {
+                    return e2;
+                } else if (v == 0) {
+                    return new CstI(0);
+                }
+                break; }
+            case (_, CstI): {
+                var v = ((CstI)e2).getValue();
+                if (v == 1) {
+                    return e1;
+                } else if (v == 0) {
+                    return new CstI(0);
+                }
+                break; }
+        }
+        return new Mul(e1, e2);
     }
 
     public override string toString() {
@@ -105,11 +160,33 @@ class Sub : Binop {
 
     // INCOMPLETE
     public override Expr simplify() { 
-        return new Sub(exp1.simplify(), exp2.simplify());
+                        var e1 = exp1.simplify();
+        var e2 = exp2.simplify();
+        switch ((e1, e2))
+        {
+            case (CstI, CstI): {
+                var v1 = ((CstI)e1).getValue();
+                var v2 = ((CstI)e2).getValue();
+                return new CstI(v1-v2);
+                }
+            case (_, CstI): {
+                var v = ((CstI)e2).getValue();
+                if (v == 0) {
+                    return e1;
+                }
+                break; }
+            case (Var, Var): {
+                var v1 = ((Var)e1).getName();
+                var v2 = ((Var)e2).getName();
+                if (v1 == v2) {
+                    return new CstI(0);
+                }
+                break; }
+        }
+        return new Sub(e1, e2);
     }
 
     public override string toString() {
         return "(" + exp1.toString() + " - " + exp2.toString() + ")";
     }
 }
-
