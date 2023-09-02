@@ -371,7 +371,7 @@ let intsToFile (inss : int list) (fname : string) =
 
 (* -----------------------------------------------------------------  *)
 
-// Exercise 2.1 i
+// Exercise 2.1
 
 type expr = 
   | CstI of int
@@ -391,3 +391,13 @@ let rec eval e (env : (string * int) list) : int =
     | Prim("*", e1, e2) -> eval e1 env * eval e2 env
     | Prim("-", e1, e2) -> eval e1 env - eval e2 env
     | Prim _            -> failwith "unknown primitive";;
+
+// Exercise 2.2
+
+let rec freevars e : string list =
+    match e with
+    | CstI i -> []
+    | Var x  -> [x]
+    | Let((x, erhs)::rest, ebody) -> 
+          union (freevars erhs, minus (freevars Let(rest, ebody), [x]))
+    | Prim(ope, e1, e2) -> union (freevars e1, freevars e2);;
