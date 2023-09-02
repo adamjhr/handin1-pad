@@ -373,31 +373,53 @@ let intsToFile (inss : int list) (fname : string) =
 
 // Exercise 2.1
 
-type expr = 
+type expr2 = 
   | CstI of int
   | Var of string
-  | Let of (string * expr) list * expr
-  | Prim of string * expr * expr
+  | Let of (string * expr2) list * expr2
+  | Prim of string * expr2 * expr2
 
-let rec eval e (env : (string * int) list) : int =
+let rec eval2 e (env : (string * int) list) : int =
     match e with
     | CstI i            -> i
     | Var x             -> lookup env x 
     | Let((x, erhs)::rest, ebody) -> 
-      let xval = eval erhs env
-      let env1 = (x, xval) :: env 
-      eval Let(rest, ebody) env1
-    | Prim("+", e1, e2) -> eval e1 env + eval e2 env
-    | Prim("*", e1, e2) -> eval e1 env * eval e2 env
-    | Prim("-", e1, e2) -> eval e1 env - eval e2 env
+      let xval = eval2 erhs env
+      let env1 = (x, xval) :: env
+      eval2 (Let(rest, ebody)) env1
+    | Prim("+", e1, e2) -> eval2 e1 env + eval2 e2 env
+    | Let([], ebody) ->
+      eval2 ebody env
+    | Prim("*", e1, e2) -> eval2 e1 env * eval2 e2 env
+    | Prim("-", e1, e2) -> eval2 e1 env - eval2 e2 env
     | Prim _            -> failwith "unknown primitive";;
 
 // Exercise 2.2
 
-let rec freevars e : string list =
+let rec freevars2 e : string list =
     match e with
     | CstI i -> []
     | Var x  -> [x]
     | Let((x, erhs)::rest, ebody) -> 
-          union (freevars erhs, minus (freevars Let(rest, ebody), [x]))
-    | Prim(ope, e1, e2) -> union (freevars e1, freevars e2);;
+          union (freevars2 erhs, minus (freevars2 (Let(rest, ebody)), [x]))
+    | Let([], ebody) ->
+          freevars2 ebody
+    | Prim(ope, e1, e2) -> union (freevars2 e1, freevars2 e2);;
+
+// Exercise 2.3
+
+let rec tcomp2 (e : expr2) (cenv : string list) : texpr =
+    match e with
+    | CstI i -> TCstI i
+    | Var x  -> TVar (getindex cenv x)
+    | Let((x, erhs)::rest, ebody) -> 
+      let cenv1 = x :: cenv 
+      TLet(tcomp2 erhs cenv, tcomp2 (Let(rest, ebody)) cenv1)
+    | Let([], ebody) ->
+      tcomp2 ebody cenv
+    | Prim(ope, e1, e2) -> TPrim(ope, tcomp2 e1 cenv, tcomp2 e2 cenv);;
+
+// Tests
+
+let exp1 = Let([("x", CstI(10)); ("y", Prim("+", CstI(2), CstI(2)))], Prim("-", Var("x"), Var("y")))
+let exp2 = Let([("x", CstI(2))], Prim("+", Var("x"), Var("y")));;

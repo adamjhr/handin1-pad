@@ -2,7 +2,7 @@
 
 (* Evaluating simple expressions with variables *)
 
-//module Intro2
+module Intro2
 
 (* Association lists map object language variables to their values *)
 

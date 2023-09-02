@@ -1,7 +1,6 @@
 namespace handin1_pad;
 
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
 
 abstract class Expr {
 
